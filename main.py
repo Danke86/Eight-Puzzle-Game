@@ -3,10 +3,14 @@ import tkinter as tk
 from tkinter import *
 from tkinter.ttk import *
 
+#init puzzle board
+puzzle_board = [[None, None, None], [None, None, None], [None, None, None]]
+empty_grid = {"x":0,"y":0}
+
 #function for updating puzzle grid
-def update_puzzle_board():
+def update_puzzle_board(number):
     # Implement the logic to update the GUI based on the current state of the puzzle
-    #check if adjacent 
+    #check if adjacent to empty grid
     
     #if adjacent swap, if not do nothing
     #check if solved already
@@ -19,7 +23,6 @@ lines = f.readlines()
 initial = []
 
 for line in lines:
-    # print(line.rstrip("\n").split())
     initial.append(line.rstrip("\n").split())
     
 print(initial)
@@ -70,15 +73,14 @@ else:
 solvability_label.grid(row=4, columnspan=3)
 
 #create grid
-empty_grid = {"x":0,"y":0}
-puzzle_board = [[None, None, None], [None, None, None], [None, None, None]]
+
 for i in range(3):
     for j in range(3):
         if initial[i][j] != '0':
             puzzle_board[i][j] = tk.Button(
                 mainFrame, 
                 text = initial[i][j], 
-                command=update_puzzle_board, 
+                command=lambda: update_puzzle_board(), 
                 relief="solid",
                 background=color2,
                 foreground=color4,
@@ -92,7 +94,7 @@ for i in range(3):
                 )
             puzzle_board[i][j].number = initial[i][j]
             puzzle_board[i][j].x = i
-            puzzle_board[i][j].j = i
+            puzzle_board[i][j].y = j
             puzzle_board[i][j].grid(row=i, column=j, pady = 2, padx = 2)
         else:
             empty_grid["x"] = i
