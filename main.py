@@ -4,36 +4,55 @@ from tkinter import *
 from tkinter.ttk import *
 
 #init puzzle board
-puzzle_board = [[None, None, None], [None, None, None], [None, None, None]]
+puzzle_board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 empty_grid = {"x":0,"y":0}
 
-#puzzle button class
-class PButton(tk.Button):
-    def __init__(self, number, locX, locY, **kwargs):
-        Button.__init__(self, **kwargs)
-        self.number = number
-        self.locX = locX
-        self.locY = locY
-    
-    def getnumber(self):
-        return self.number
-    
-    def getposX(self):
-        return self.posX
-    
-    def getposY(self):
-        return self.posY
+solved = False
 
 #function for updating puzzle grid
 def update_puzzle_board(button):
-    print(button.number)
+    print("Pressed: " + button.number + " Button")
+    print("Location X: {}, Location Y: {}".format(button.x, button.y) )
     # Implement the logic to update the GUI based on the current state of the puzzle
-    #check if adjacent to empty grid
-    
-    #if adjacent swap, if not do nothing
-    #check if solved already
-    pass
+    #if solved already change the solvability label to solved
+    if isSolved():
+        print("SOLVED!")
+    else:
+        #check if adjacent to empty grid
+        #if adjacent swap, if not do nothing
+        if (abs(button.x - empty_grid['x'])+ abs(button.y -  empty_grid['y'])) <= 1:
+            #swap
+            # print("adjacent")
+            
+            puzzle_board[empty_grid['x']][empty_grid['y']] = button
+            puzzle_board[button.x][button.y] = 0
+            tempx = empty_grid['x']
+            tempy = empty_grid['y']
+            empty_grid['x'] = button.x
+            empty_grid['y'] = button.y
+            button.x = tempx
+            button.y = tempy
 
+            
+            buildGrid()
+            checkSolved()
+            
+#check if solved already
+def isSolved():
+    solved_state = [[1,2,3], [4,5,6], [7,8,0]]
+    current_state = [[puzzle_board[i][j] if puzzle_board[i][j] == 0 else int(puzzle_board[i][j].number) for j in range(3)] for i in range (3)]
+    print(current_state)
+    return current_state == solved_state
+
+def buildGrid():
+    for i in range(3):
+        for j in range(3):
+            if puzzle_board[i][j]:
+                b = puzzle_board[i][j]
+                b.grid(row=i, column=j, pady=2, padx=2)
+                
+def checkSolved():
+    pass
 
 #read puzzle.in
 f = open("puzzle.in", "r")
@@ -91,12 +110,11 @@ else:
 solvability_label.grid(row=4, columnspan=3)
 
 #create grid
-
 for i in range(3):
     for j in range(3):
         if initial[i][j] != '0':
             p = puzzle_board[i][j] = tk.Button(
-                mainFrame, 
+                mainFrame,
                 text = initial[i][j], 
                 # command=lambda: update_puzzle_board(), 
                 relief="solid",
@@ -110,7 +128,7 @@ for i in range(3):
                 border=3,
                 font=('Arial',30,'bold')
                 )
-            p.config(command = lambda: update_puzzle_board(p) )
+            p.config(command = lambda button=p: update_puzzle_board(button) )
             puzzle_board[i][j].number = initial[i][j]
             puzzle_board[i][j].x = i
             puzzle_board[i][j].y = j
@@ -119,8 +137,8 @@ for i in range(3):
             empty_grid["x"] = i
             empty_grid["y"] = j
 
-print(puzzle_board)
-print(empty_grid) 
+# print(puzzle_board)
+# print(empty_grid) 
 
 root.mainloop()
 
