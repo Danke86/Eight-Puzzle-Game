@@ -7,8 +7,26 @@ from tkinter.ttk import *
 puzzle_board = [[None, None, None], [None, None, None], [None, None, None]]
 empty_grid = {"x":0,"y":0}
 
+#puzzle button class
+class PButton(tk.Button):
+    def __init__(self, number, locX, locY, **kwargs):
+        Button.__init__(self, **kwargs)
+        self.number = number
+        self.locX = locX
+        self.locY = locY
+    
+    def getnumber(self):
+        return self.number
+    
+    def getposX(self):
+        return self.posX
+    
+    def getposY(self):
+        return self.posY
+
 #function for updating puzzle grid
-def update_puzzle_board(number):
+def update_puzzle_board(button):
+    print(button.number)
     # Implement the logic to update the GUI based on the current state of the puzzle
     #check if adjacent to empty grid
     
@@ -77,10 +95,10 @@ solvability_label.grid(row=4, columnspan=3)
 for i in range(3):
     for j in range(3):
         if initial[i][j] != '0':
-            puzzle_board[i][j] = tk.Button(
+            p = puzzle_board[i][j] = tk.Button(
                 mainFrame, 
                 text = initial[i][j], 
-                command=lambda: update_puzzle_board(), 
+                # command=lambda: update_puzzle_board(), 
                 relief="solid",
                 background=color2,
                 foreground=color4,
@@ -92,6 +110,7 @@ for i in range(3):
                 border=3,
                 font=('Arial',30,'bold')
                 )
+            p.config(command = lambda: update_puzzle_board(p) )
             puzzle_board[i][j].number = initial[i][j]
             puzzle_board[i][j].x = i
             puzzle_board[i][j].y = j
@@ -100,6 +119,7 @@ for i in range(3):
             empty_grid["x"] = i
             empty_grid["y"] = j
 
+print(puzzle_board)
 print(empty_grid) 
 
 root.mainloop()
