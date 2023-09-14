@@ -7,23 +7,20 @@ from tkinter.ttk import *
 puzzle_board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 empty_grid = {"x":0,"y":0}
 
-solved = False
-
 #function for updating puzzle grid
 def update_puzzle_board(button):
-    print("Pressed: " + button.number + " Button")
+    print("Pressed number: " + button.number )
     print("Location X: {}, Location Y: {}".format(button.x, button.y) )
     # Implement the logic to update the GUI based on the current state of the puzzle
     #if solved already change the solvability label to solved
     if isSolved():
-        print("SOLVED!")
+        checkSolved()
     else:
         #check if adjacent to empty grid
         #if adjacent swap, if not do nothing
         if (abs(button.x - empty_grid['x'])+ abs(button.y -  empty_grid['y'])) <= 1:
             #swap
             # print("adjacent")
-            
             puzzle_board[empty_grid['x']][empty_grid['y']] = button
             puzzle_board[button.x][button.y] = 0
             tempx = empty_grid['x']
@@ -33,7 +30,6 @@ def update_puzzle_board(button):
             button.x = tempx
             button.y = tempy
 
-            
             buildGrid()
             checkSolved()
             
@@ -52,7 +48,24 @@ def buildGrid():
                 b.grid(row=i, column=j, pady=2, padx=2)
                 
 def checkSolved():
-    pass
+    if isSolved():
+        solvability_label.config(text="Puzzle is solved!")
+        print("SOLVED!")
+        
+        
+def isSolvable(puzzle):
+    initstate = [[puzzle[i][j] if puzzle[i][j] == 0 else int(puzzle[i][j].number) for j in range(3)] for i in range (3)]
+    inv_count = getInvCount([j for sub in initstate for j in sub])
+    return (inv_count % 2 == 0)
+
+def getInvCount(arr):
+    inv_count = 0
+    empty_value = 0
+    for i in range(0, 9):
+        for j in range(i + 1, 9):
+            if int(arr[j]) != empty_value and int(arr[i]) != empty_value and int(arr[i]) > int(arr[j]):
+                inv_count += 1
+    return inv_count
 
 #read puzzle.in
 f = open("puzzle.in", "r")
@@ -63,6 +76,7 @@ for line in lines:
     initial.append(line.rstrip("\n").split())
     
 print(initial)
+f.close()
 
 #create window
 root = tk.Tk()
@@ -86,37 +100,13 @@ mainFrame.rowconfigure(0, weight=1)
 mainFrame.rowconfigure(1, weight=1)
 mainFrame.rowconfigure(2, weight=1)
 
-#checks is solvable
-is_solvable = False
-if is_solvable:
-    solvtext = ""
-    solvability_label = tk.Label(
-        mainFrame, 
-        text="Puzzle is solvable",
-        relief="flat",
-        background=color1,
-        fg="WHITE",
-        font=('Arial',10,'bold')
-        )
-else:
-    solvability_label = tk.Label(
-        mainFrame, 
-        text="Puzzle is not solvable",
-        relief="flat",
-        fg="WHITE",
-        background=color1,
-        font=('Arial',10,'bold')
-        )
-solvability_label.grid(row=4, columnspan=3)
-
-#create grid
+#create grid and initialize values
 for i in range(3):
     for j in range(3):
         if initial[i][j] != '0':
             p = puzzle_board[i][j] = tk.Button(
                 mainFrame,
                 text = initial[i][j], 
-                # command=lambda: update_puzzle_board(), 
                 relief="solid",
                 background=color2,
                 foreground=color4,
@@ -137,8 +127,27 @@ for i in range(3):
             empty_grid["x"] = i
             empty_grid["y"] = j
 
-# print(puzzle_board)
-# print(empty_grid) 
+#checks is solvable
+if isSolvable(puzzle_board):
+    solvtext = ""
+    solvability_label = tk.Label(
+        mainFrame, 
+        text="Puzzle is solvable",
+        relief="flat",
+        background=color1,
+        fg="WHITE",
+        font=('Arial',10,'bold')
+        )
+else:
+    solvability_label = tk.Label(
+        mainFrame, 
+        text="Puzzle is not solvable",
+        relief="flat",
+        fg="WHITE",
+        background=color1,
+        font=('Arial',10,'bold')
+        )
+solvability_label.grid(row=4, columnspan=3)
 
 root.mainloop()
 
