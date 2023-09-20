@@ -81,7 +81,7 @@ f.close()
 #create window
 root = tk.Tk()
 root.title("Eight-Puzzle Game")
-root.geometry('330x350')
+root.geometry('400x480')
 root.resizable(0,0) 
 
 #colors
@@ -148,6 +148,28 @@ else:
         font=('Arial',10,'bold')
         )
 solvability_label.grid(row=4, columnspan=3)
+
+solutionFrame = tk.Frame(mainFrame, bg=color1)
+solutionFrame.grid(row=5, columnspan=3)
+
+#options dropdown
+options = ["BFS","DFS"]
+clicked = StringVar()
+clicked.set("BFS")
+
+dropdown = OptionMenu(solutionFrame, clicked, *options)
+dropdown.pack(side=tk.LEFT, padx=10)
+# dropdown.grid(row=5, column=0,columnspan=2, pady=10)
+
+solveButton = Button(solutionFrame , text = "Solve" , command = "" )
+# solveButton.grid(row=5, column=2, pady=10)
+solveButton.pack(side=tk.LEFT, padx=10)
+
+#solution text
+solutionTextFrame = tk.Frame(mainFrame, bg=color1)
+solutionTextFrame.grid(row=6, columnspan=4)
+solText = Text(solutionTextFrame, height=2, width=36)
+solText.pack(pady=10)
 
 root.mainloop()
 
