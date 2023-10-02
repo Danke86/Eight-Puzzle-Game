@@ -17,12 +17,15 @@ move_list = []
 current_move_index = 0
 
 class pState:
-    def __init__(self, pboard, emptyX, emptyY, prevaction, parent):
+    def __init__(self, pboard, emptyX, emptyY, prevaction, parent, g=0, h=0, f=0):
         self.pboard = pboard
         self.emptyX = emptyX
         self.emptyY = emptyY
         self.prevaction = prevaction
         self.parent = parent
+        self.g = g
+        self.h = h
+        self.f = f
 
 class Solution:
     def __init__(self, state, moves, cost):
@@ -95,6 +98,10 @@ def Result(s,a):
     newState.emptyY = new_emptyY
     newState.prevaction = a
     newState.parent = s
+
+    # newState.g = PathCostToFrom(initialS, newState)
+    # newState.h = Manhattan(newState)
+    # newState.f = newState.g + newState.h
     # print("pboard:{} emptyX:{} emptyY:{} prev:{} parent:{}".format(newState.pboard,newState.emptyX,newState.emptyY,newState.prevaction,newState.parent))
 
     return newState
@@ -120,7 +127,8 @@ def BFSearch(s):
         else:
             for a in Action(cState):
                 nState = Result(cState, a)
-                if str(nState.pboard) not in visited and nState not in frontier:
+                if str(nState.pboard) not in visited and not isInFrontier(nState,frontier):
+                # if str(nState.pboard) not in visited and all(str(x.pboard) != str(nState.pboard) for x in frontier):
                     frontier.append(nState)
         print("States explored: {}".format(len(visited)))
 
@@ -136,7 +144,80 @@ def DFSearch(s):
         else:
             for a in Action(cState):
                 nState = Result(cState, a)
-                if str(nState.pboard) not in visited and nState not in frontier:
+                if str(nState.pboard) not in visited and not isInFrontier(nState,frontier):
+                    frontier.append(nState)
+        print("States explored: {}".format(len(visited)))
+
+def PathCostToFrom(initialS, final):
+    pathcost = 0
+    currentpointer = final
+    if (currentpointer.parent == None):
+        return 0
+    while (initialS is not currentpointer):
+        pathcost = pathcost + 1
+        currentpointer = currentpointer.parent
+    return pathcost
+
+def Manhattan(pb):
+    #goal: [[1,2,3],[4,5,6],[7,8,0]]
+    goal = [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]]
+    total = 0
+    for x in range(9):
+        for i in range (3):
+            for j in range (3):
+                #find where x is 
+                if pb[i][j] == x:
+                    total = total + (abs(i - goal[x][0]) + abs(j - goal[x][1])) 
+    return total
+
+def removeMinF(frontier):
+    lowest = None
+    lindex = None
+    counter = 0
+
+    for state in frontier:
+        #if lowest is None, set curState to lowest
+        if lowest == None:
+            lowest = state
+            lindex = counter
+        else:
+            if(lowest.f > state.f):
+                lowest = state
+                lindex = counter
+
+        counter += 1
+    frontier.pop(lindex)
+    return lowest
+
+def findDuplicate(state, frontier):
+    for x in frontier:
+        if state.pboard == x.pboard:
+            return x
+
+def isInFrontier(state, frontier):
+    for x in frontier:
+        if state.pboard == x.pboard:
+            return TRUE
+    return FALSE
+
+def AStar(s):
+    frontier = [s]
+    visited = set()
+    while frontier:
+        bestState = removeMinF(frontier)
+        visited.add(bestState)
+        if GoalTest(bestState):
+            print("Explored States: {}".format(len(visited)))
+            return bestState
+        else:
+            for a in Action(bestState):
+                nState = Result(bestState, a)
+                nState.g = PathCostToFrom(s, nState)
+                nState.h = Manhattan(nState.pboard)
+                nState.f = nState.g + nState.h
+                print("{} {} {}".format(nState.g, nState.h, nState.f))
+                if (str(nState.pboard) not in visited and not isInFrontier(nState,frontier)) or (isInFrontier(nState,frontier) and nState.g < findDuplicate(nState,frontier).g):
+                    nState.parent = bestState
                     frontier.append(nState)
         print("States explored: {}".format(len(visited)))
 
@@ -153,6 +234,11 @@ def solvePuzzle(s,choice):
         elif choice == "DFS":
             solution = DFSearch(s)
             print("pboard:{} emptyX:{} emptyY:{} prev:{} parent:{}".format(solution.pboard,solution.emptyX,solution.emptyY,solution.prevaction,solution.parent))
+        
+        elif choice == "A*":
+            solution = AStar(s)
+            print("pboard:{} emptyX:{} emptyY:{} prev:{} parent:{}".format(solution.pboard,solution.emptyX,solution.emptyY,solution.prevaction,solution.parent))
+        
         currentpointer = solution
         while (s is not currentpointer):
             move_list.append(currentpointer.prevaction)
@@ -192,12 +278,14 @@ def handleSolve():
 
     choice = clicked.get()
     currPboard = [[puzzle_board[i][j] if puzzle_board[i][j] == 0 else int(puzzle_board[i][j].number) for j in range(3)] for i in range (3)]
-    currstate = pState(currPboard, empty_grid["x"], empty_grid["y"], previous_action, None)
+    currstate = pState(currPboard, empty_grid["x"], empty_grid["y"], previous_action, None, 0, Manhattan(currPboard), Manhattan(currPboard))
 
     if choice == "BFS":
         solution = solvePuzzle(currstate,"BFS")
     elif choice == "DFS":
         solution = solvePuzzle(currstate,"DFS")
+    elif choice == "A*":
+        solution = solvePuzzle(currstate,"A*")
     else:
         print("Error: not an option")
 
@@ -419,7 +507,7 @@ solutionFrame = tk.Frame(mainFrame, bg=color1)
 solutionFrame.grid(row=5, columnspan=3)
 
 #options dropdown
-options = ["BFS", "BFS", "DFS"]
+options = ["BFS", "BFS", "DFS", "A*"]
 clicked = StringVar()
 clicked.set(options[0]) 
 
@@ -439,7 +527,7 @@ solText.pack(pady=10)
 
 #displays possible actions
 currPboard = [[puzzle_board[i][j] if puzzle_board[i][j] == 0 else int(puzzle_board[i][j].number) for j in range(3)] for i in range (3)]
-currstate = pState(currPboard, empty_grid["x"], empty_grid["y"], previous_action, None)
+currstate = pState(currPboard, empty_grid["x"], empty_grid["y"], previous_action, None, 0, Manhattan(currPboard), Manhattan(currPboard))
 Action(currstate)
 
 root.mainloop()
