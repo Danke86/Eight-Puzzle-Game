@@ -2,12 +2,14 @@
 import tkinter as tk
 from tkinter import *
 from tkinter.ttk import *
+from tkinter import filedialog
 import copy
 import sys
 
 sys.setrecursionlimit(100000)
 
 #init puzzle board
+initial = []
 puzzle_board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 empty_grid = {"x":0,"y":0}
 previous_action = None
@@ -166,27 +168,26 @@ def Manhattan(pb):
         for i in range (3):
             for j in range (3):
                 #find where x is 
-                if pb[i][j] == x:
-                    total = total + (abs(i - goal[x][0]) + abs(j - goal[x][1])) 
+                if pb[i][j] == x and x != 0:
+                    total = total + (abs(i - goal[x-1][0]) + abs(j - goal[x-1][1])) 
     return total
 
+# def Manhattan(pb):
+#     goal_positions = {1: (0, 0), 2: (0, 1), 3: (0, 2),
+#                       4: (1, 0), 5: (1, 1), 6: (1, 2),
+#                       7: (2, 0), 8: (2, 1), 0: (2, 2)}  # Assuming 0 represents the empty space
+#     total = 0
+#     for i in range(3):
+#         for j in range(3):
+#             tile_value = pb[i][j]
+#             if tile_value != 0:  # Skip the empty space (0)
+#                 goal_x, goal_y = goal_positions[tile_value]
+#                 total += abs(i - goal_x) + abs(j - goal_y)
+#     return total
+
 def removeMinF(frontier):
-    lowest = None
-    lindex = None
-    counter = 0
-
-    for state in frontier:
-        #if lowest is None, set curState to lowest
-        if lowest == None:
-            lowest = state
-            lindex = counter
-        else:
-            if(lowest.f > state.f):
-                lowest = state
-                lindex = counter
-
-        counter += 1
-    frontier.pop(lindex)
+    lowest = min(frontier, key=lambda state: state.f)
+    frontier.remove(lowest)
     return lowest
 
 def findDuplicate(state, frontier):
@@ -197,8 +198,8 @@ def findDuplicate(state, frontier):
 def isInFrontier(state, frontier):
     for x in frontier:
         if state.pboard == x.pboard:
-            return TRUE
-    return FALSE
+            return True
+    return False
 
 def AStar(s):
     frontier = [s]
@@ -215,7 +216,7 @@ def AStar(s):
                 nState.g = PathCostToFrom(s, nState)
                 nState.h = Manhattan(nState.pboard)
                 nState.f = nState.g + nState.h
-                print("{} {} {}".format(nState.g, nState.h, nState.f))
+                print("g:{} h:{} f:{}".format(nState.g, nState.h, nState.f))
                 if (str(nState.pboard) not in visited and not isInFrontier(nState,frontier)) or (isInFrontier(nState,frontier) and nState.g < findDuplicate(nState,frontier).g):
                     nState.parent = bestState
                     frontier.append(nState)
@@ -421,21 +422,31 @@ def getInvCount(arr):
                 inv_count += 1
     return inv_count
 
-#read puzzle.in
-f = open("puzzle.in", "r")
-lines = f.readlines()
-initial = []
+def open_file_dialog():
+    file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("Input files", "*.in"), ("All files", "*.*")])
+    read_file(file_path)
 
-for line in lines:
-    initial.append(line.rstrip("\n").split())
+def read_file(filepath="puzzle.in"):
+    # global initial
+    f = open(filepath, "r")
+    lines = f.readlines()
+    initial.clear()
+    for line in lines:
+        initial.append(line.rstrip("\n").split())
     
-print(initial)
-f.close()
+    print(initial)
+    f.close()
+    
+    buildGrid()
+    checkSolved()
+
+#read puzzle.in
+read_file()
 
 #create window
 root = tk.Tk()
 root.title("Eight-Puzzle Game")
-root.geometry('400x480')
+root.geometry('400x540')
 root.resizable(0,0) 
 
 #colors
@@ -524,6 +535,13 @@ solutionTextFrame = tk.Frame(mainFrame, bg=color1)
 solutionTextFrame.grid(row=6, columnspan=4)
 solText = Text(solutionTextFrame, height=4, width=40)
 solText.pack(pady=10)
+
+#open puzzle.in files
+openfileFrame = tk.Frame(mainFrame, bg=color1)
+openfileFrame.grid(row=7, columnspan=4)
+
+open_button = tk.Button(openfileFrame, text="Open File", command=open_file_dialog)
+open_button.pack(side=tk.LEFT, pady=10)
 
 #displays possible actions
 currPboard = [[puzzle_board[i][j] if puzzle_board[i][j] == 0 else int(puzzle_board[i][j].number) for j in range(3)] for i in range (3)]
