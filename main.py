@@ -13,6 +13,7 @@ initial = []
 puzzle_board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 empty_grid = {"x":0,"y":0}
 previous_action = None
+loaded = False
 
 # for the solution
 move_list = []
@@ -172,19 +173,6 @@ def Manhattan(pb):
                     total = total + (abs(i - goal[x-1][0]) + abs(j - goal[x-1][1])) 
     return total
 
-# def Manhattan(pb):
-#     goal_positions = {1: (0, 0), 2: (0, 1), 3: (0, 2),
-#                       4: (1, 0), 5: (1, 1), 6: (1, 2),
-#                       7: (2, 0), 8: (2, 1), 0: (2, 2)}  # Assuming 0 represents the empty space
-#     total = 0
-#     for i in range(3):
-#         for j in range(3):
-#             tile_value = pb[i][j]
-#             if tile_value != 0:  # Skip the empty space (0)
-#                 goal_x, goal_y = goal_positions[tile_value]
-#                 total += abs(i - goal_x) + abs(j - goal_y)
-#     return total
-
 def removeMinF(frontier):
     lowest = min(frontier, key=lambda state: state.f)
     frontier.remove(lowest)
@@ -296,6 +284,7 @@ def handleSolve():
 
     #do the next next solution thingy
     move_list = solution.moves
+    pathcostText.config(text="Path Cost: {}".format(PathCost(move_list)))
     dropdown.config(state=tk.DISABLED)
     solveButton.config(state=tk.NORMAL, text="Next", command= movePuzzle)
 
@@ -423,30 +412,92 @@ def getInvCount(arr):
     return inv_count
 
 def open_file_dialog():
+    global loaded
     file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("Input files", "*.in"), ("All files", "*.*")])
-    read_file(file_path)
+
+    if file_path:
+        loaded = True
+        read_file(file_path)
+    else:
+        pass
 
 def read_file(filepath="puzzle.in"):
-    # global initial
+    global initial, puzzle_board, loaded, move_list, current_move_index
+
+    initial.clear()
+    #reset
+    if loaded:
+        for i in range(3):
+            for j in range(3):
+                if puzzle_board[i][j] != 0:
+                    puzzle_board[i][j].destroy()
+    puzzle_board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+
     f = open(filepath, "r")
     lines = f.readlines()
-    initial.clear()
+
     for line in lines:
         initial.append(line.rstrip("\n").split())
     
     print(initial)
     f.close()
+
+    for i in range(3):
+        for j in range(3):
+            if initial[i][j] != '0':
+                p = puzzle_board[i][j] = tk.Button(
+                    mainFrame,
+                    text = initial[i][j], 
+                    relief="solid",
+                    background=color2,
+                    foreground=color4,
+                    activebackground=color3,
+                    highlightthickness=2,
+                    highlightcolor='WHITE',
+                    height=10,
+                    width=10,
+                    border=3,
+                    font=('Arial',30,'bold')
+                    )
+                p.config(command = lambda button=p: update_puzzle_board(button) )
+                puzzle_board[i][j].number = initial[i][j]
+                puzzle_board[i][j].x = i
+                puzzle_board[i][j].y = j
+                puzzle_board[i][j].grid(row=i, column=j, pady = 2, padx = 2)
+            else:
+                puzzle_board[i][j] = 0
+                empty_grid["x"] = i
+                empty_grid["y"] = j
+
     
+    dropdown.config(state = tk.NORMAL)
+    solveButton.config(state = tk.NORMAL, text="Solve", command=handleSolve)
+    pathcostText.config(text="Path Cost:")
+    notloaded_label.config(text="")
+    solText.delete(1.0, tk.END)
+
+    move_list = []
+    current_move_index = 0
+
+    if isSolvable(puzzle_board):
+        solvability_label.config(text="Puzzle is solvable")
+    else:
+        solvability_label.config(text="Puzzle is not solvable")
+
+    loaded = True
+
+    print(initial)
+    print(puzzle_board)
+    print(empty_grid["x"])
+    print(empty_grid["y"])
+
     buildGrid()
     checkSolved()
-
-#read puzzle.in
-read_file()
 
 #create window
 root = tk.Tk()
 root.title("Eight-Puzzle Game")
-root.geometry('400x540')
+root.geometry('400x580')
 root.resizable(0,0) 
 
 #colors
@@ -465,48 +516,10 @@ mainFrame.rowconfigure(0, weight=1)
 mainFrame.rowconfigure(1, weight=1)
 mainFrame.rowconfigure(2, weight=1)
 
-#create grid and initialize values
-for i in range(3):
-    for j in range(3):
-        if initial[i][j] != '0':
-            p = puzzle_board[i][j] = tk.Button(
-                mainFrame,
-                text = initial[i][j], 
-                relief="solid",
-                background=color2,
-                foreground=color4,
-                activebackground=color3,
-                highlightthickness=2,
-                highlightcolor='WHITE',
-                height=10,
-                width=10,
-                border=3,
-                font=('Arial',30,'bold')
-                )
-            p.config(command = lambda button=p: update_puzzle_board(button) )
-            puzzle_board[i][j].number = initial[i][j]
-            puzzle_board[i][j].x = i
-            puzzle_board[i][j].y = j
-            puzzle_board[i][j].grid(row=i, column=j, pady = 2, padx = 2)
-        else:
-            empty_grid["x"] = i
-            empty_grid["y"] = j
-
-#checks is solvable
-if isSolvable(puzzle_board):
-    solvtext = ""
-    solvability_label = tk.Label(
+#solvability label
+solvability_label = tk.Label(
         mainFrame, 
-        text="Puzzle is solvable",
-        relief="flat",
-        background=color1,
-        fg="WHITE",
-        font=('Arial',10,'bold')
-        )
-else:
-    solvability_label = tk.Label(
-        mainFrame, 
-        text="Puzzle is not solvable",
+        text="No puzzle loaded",
         relief="flat",
         fg="WHITE",
         background=color1,
@@ -533,20 +546,48 @@ solveButton.pack(side=tk.LEFT, padx=10)
 #solution text
 solutionTextFrame = tk.Frame(mainFrame, bg=color1)
 solutionTextFrame.grid(row=6, columnspan=4)
-solText = Text(solutionTextFrame, height=4, width=40)
+solText = Text(solutionTextFrame, height=5, width=40)
 solText.pack(pady=10)
+
+#pathcost text
+pathcostFrame = tk.Frame(mainFrame, bg=color1)
+pathcostFrame.grid(row=7, columnspan=4)
+pathcostText = tk.Label(
+        pathcostFrame, 
+        text="Path Cost: ",
+        relief="flat",
+        fg="WHITE",
+        background=color1,
+        font=('Arial',10,'bold')
+        )
+pathcostText.pack(pady=2)
 
 #open puzzle.in files
 openfileFrame = tk.Frame(mainFrame, bg=color1)
-openfileFrame.grid(row=7, columnspan=4)
+openfileFrame.grid(row=8, columnspan=4)
 
 open_button = tk.Button(openfileFrame, text="Open File", command=open_file_dialog)
-open_button.pack(side=tk.LEFT, pady=10)
+open_button.pack(side=tk.LEFT, pady=5)
 
 #displays possible actions
 currPboard = [[puzzle_board[i][j] if puzzle_board[i][j] == 0 else int(puzzle_board[i][j].number) for j in range(3)] for i in range (3)]
 currstate = pState(currPboard, empty_grid["x"], empty_grid["y"], previous_action, None, 0, Manhattan(currPboard), Manhattan(currPboard))
 Action(currstate)
+
+#read puzzle.in
+if loaded:
+    read_file()
+else:
+    solveButton.config(state = tk.DISABLED)
+    notloaded_label = tk.Label(
+        mainFrame, 
+        text="File not yet Loaded",
+        relief="flat",
+        background=color1,
+        fg="WHITE",
+        font=('Arial',10,'bold')
+        )
+    notloaded_label.grid(row=1, columnspan=3)
 
 root.mainloop()
 
