@@ -194,7 +194,7 @@ def AStar(s):
     visited = set()
     while frontier:
         bestState = removeMinF(frontier)
-        visited.add(bestState)
+        visited.add(str(bestState.pboard))
         if GoalTest(bestState):
             print("Explored States: {}".format(len(visited)))
             return bestState
